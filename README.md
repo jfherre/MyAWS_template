@@ -1,0 +1,1 @@
+# MyAWS_template
