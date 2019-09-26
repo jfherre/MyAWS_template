@@ -1,0 +1,76 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Cloud Formation to EC2
+
+Parameters:
+  PruVpcCidr:
+    Type: String
+    Default: 10.0.0.0/20
+
+  AmazonLinuxAMIID:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+  KeypairEC2:
+    Type: String
+    Default: Prukeypair
+
+Resources:
+
+  PruVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref PruVpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: VPC EC2
+  
+  PruBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Bucket prueba EC2
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: PruVPC
+      CidrBlock: 10.0.0.0/24
+      Tags:
+        - Key: name
+          Value: app Subnet
+
+  InstanceLInux:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Ref AmazonLinuxAMIID
+      KeyName: 
+        Ref: KeypairEC2
+      SubnetId: !Ref PrivateSubnet1
+      SecurityGroupIds:
+        - !Ref AppSecurityGroup
+      Tags:
+        - Key: Name
+          Value: App Server
+
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to client host
+      VpcId:
+        Ref: PruVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
